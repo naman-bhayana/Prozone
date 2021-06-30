@@ -1,0 +1,8 @@
+directories:
+  output: dist
+  buildResources: build
+appId: utkal-electronics
+win:
+  target: NSIS
+  icon: ./public/img/utkalicon.png
+electronVersion: 4.1.1

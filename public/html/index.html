@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Impavido</title>
+    <script src="../js/flexible.js"></script>
+    <link rel="stylesheet" href="../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/index.css">
+</head>
+
+<body>
+    <div class="body-box">
+        <div class="tool-bar">
+            <div style="display: flex;">
+                <div class="column">
+                    <div class="form-group">
+                        <label for="selectTestType">Select Test Type</label>
+                        <select id="selectTestType" class="form-control test">
+                            <option>Select Test Type</option>
+                            <option>Smoke</option>
+                            <option>Gas</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="BaudRate">BaudRate</label>
+                        <input type="text" class="form-control" id="BaudRate" value="9600">
+                    </div>
+                </div>
+                <div class="column">
+                    <div class="form-group">
+                        <label for="disabledSelect">Select Serial Port</label>
+                        <select id="disabledSelect" class="form-control com">
+                        </select>
+                    </div>
+                    <div class="submit-data">
+                        <button class="btn-scan btn btn-primary btn-block"><span>Scan</span></button>
+                    </div>
+                </div>
+                <div class="column">
+                    <div class="submit-data">
+                        <button class="btn-submit btn btn-primary btn-block"><span>Connect</span></button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="content-box">
+            <div class="receive-box">
+                <div class="send-header bg-secondary">
+                    <label>Receive information</label>
+                </div>
+                <div class="receive-windows">
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script src="../js/myjs.js">
+</script>
+
+</html>

@@ -1,0 +1,135 @@
+.body-box {
+    /*display: flex;
+    flex-direction: row;
+    justify-content: space-between;*/
+    color: #000;
+    background: url("../img/background.jpg");
+    background-size: contain;
+    width: 100%;
+    height: 100vh;
+}
+
+.tool-bar {
+    /*display: flex;
+    flex-direction: column;
+    justify-content: space-between;*/
+    width: 100%;
+    padding: 0px 15px 15px;
+    box-shadow: 2px 0px 5px #ccc;
+}
+
+.content-box {
+    width: 100%;
+    padding: 15px 30px;
+}
+.column{
+    width: 33%;
+    padding: 10px;
+}
+.column:last-child{
+    margin-top: 55px;
+}
+
+.receive-box {
+    width: 100%;
+    border:1px solid #aaa;
+}
+.receive-windows {
+    padding: 15px;
+    height: 220px;
+    border-top:1px solid #aaa;
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+
+.submit-data{
+    margin-top: 37px;
+}
+.send-box {
+    display: flex;
+    flex-direction: column;
+    height: 230px;
+}
+
+.send-header {
+    height: 26px;
+    padding-left: 15px;
+    line-height: 26px;
+    background-color: #FAFAFA;
+}
+
+.send-windows {
+    width: 100%;
+    height: 150px;
+    border-bottom: 1px solid #ccc;
+}
+
+.input-send-data {
+    width: 100%;
+    height: 100%;
+    padding: 15px;
+    border: 0px;
+    resize: none;
+}
+
+.send-btn {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-content: center;
+}
+
+.btn-box {
+    margin-right: 15px;
+    margin-top: 8px;
+}
+
+.mybutton{
+    margin:10px 70px;
+    border: none;
+    outline: none;
+    display: absolute;
+    display: block;
+    width: 100px;
+    height: 40px;
+    background: #00f;
+    color: #FFF;
+    text-align: left;
+    padding-left: 20px;
+    transform: rotate(0deg) skewX(10deg) translate(0,0);
+    transition: 0.5s;
+    box-shadow: -20px 20px 10px #999;
+}
+
+.mybutton :before{
+    content: '';
+    position: absolute;
+    top: 5px;
+    left: -10px;
+    height: 100%;
+    width: 10px;
+    background: #0000b1;
+    transform: rotate(0deg) skewY(-45deg);
+    transition: 0.5s;
+}
+.mybutton :after{
+    content: '';
+    position: absolute;
+    left: -5px;
+    bottom: -10px;
+    height: 10px;
+    width: 100%;
+    background: #0000b1;
+    transform: rotate(0deg) skewX(-45deg);
+    transition: 0.5s;
+}
+.mybutton:hover{
+    outline: none;
+    transform: skewX(10deg) translate(0px,-10px);
+    box-shadow: -25px 25px 5px #999;
+}
+.mybutton:active{
+    outline: none;
+    transform: skewX(10deg) translateY(0px);
+    box-shadow: -15px 15px 5px #999;
+}
