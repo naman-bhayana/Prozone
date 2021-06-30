@@ -163,12 +163,17 @@ $('.btn-submit').click((data) => {
   }
   else if(buttonName==='Connect')
   {   
+
     port = new serialport(COM, {
       baudRate: parseInt(BaudRate)
     });
 
     port.on('open',()=>{
       $('.btn-submit').html("Disconnect");
+      $("#selectTestType").prop('disabled', true);
+      $("#disabledSelect").prop('disabled', true);
+      $("#BaudRate").prop('disabled', true);
+      $("#scanBtn").prop('disabled', true);
     });
 
     port.on('error',(err)=>{
@@ -235,7 +240,7 @@ $('.btn-submit').click((data) => {
               }
 
             }
-            if(strData.length==102)
+            if(strData.length==102 || strData.length==100)
             {
               $("#data2").removeClass('data1');
               $("#data2").addClass('data');
@@ -259,7 +264,6 @@ $('.btn-submit').click((data) => {
                 return;
               }
               console.log(strData);
-
               
               let idealrpmmax = strToHex(4).toString();
               let maxrpmavg = strToHex(8).toString();
@@ -296,30 +300,6 @@ $('.btn-submit').click((data) => {
               let time = date.format("HH:mm");
               console.log(todayDate+"  time"+time);
 
-              // let machineData={
-              //     Idealrpmmax:idealrpmmax.toString(),
-              //     Maxrpmavg:maxrpmavg.toString(),
-              //     Avgoiltemp:avgoiltemp.toString(),
-              //     C1k:c1k.toString(),
-              //     C1hsu:c1hsu.toString(),
-              //     C1idealrpm:c1idealrpm.toString(),
-              //     C1maxrpm:c1maxrpm.toString(),
-              //     C1oil:c1oil.toString(),
-              //     C2k:c2k.toString(),
-              //     C2hsu:c2hsu.toString(),
-              //     C2idealrpm:c2idealrpm.toString(),
-              //     C2maxrpm:c2maxrpm.toString(),
-              //     C2oil:c2oil.toString(),
-              //     C3k:c3k.toString(),
-              //     C3hsu:c3hsu.toString(),
-              //     C3idealrpm:c3idealrpm.toString(),
-              //     C3maxrpm:c3maxrpm.toString(),
-              //     C3oil:c3oil.toString(),
-              //     Time:time.toString(),
-              //     Reserve:"8",
-              //     Status:"OK"
-              // };
-
               let machineData={
                  PUC_Test:"CP100/Smoke_tController.puc_data",
                  Flush_Cyl:"#PT;"+idealrpmmax+";"+maxrpmavg+";"+avgoiltemp+";",
@@ -341,7 +321,7 @@ $('.btn-submit').click((data) => {
                 else
                 {
                   console.log("File has been saved");
-                  $('.receive-windows').text(jsonContent);     
+                  $('.receive-windows').text(jsonContent.replace(/,/g,"\n"));    
                 }
               });
               
@@ -449,6 +429,7 @@ $('.btn-submit').click((data) => {
               let jsonContent = JSON.stringify(machineData);
               fs2.writeFile("gas.json",jsonContent,'utf8',(err)=>{
                   if(err){
+                  
 
                   }else{
                       console.log("File has been save");
@@ -492,6 +473,10 @@ $('.btn-submit').click((data) => {
               port.close(err=> {
                 console.log('port closed', err);
                 $('.btn-submit').html("Connect");
+                $("#selectTestType").prop('disabled', false);
+                $("#disabledSelect").prop('disabled', false);
+                $("#BaudRate").prop('disabled', false);
+                $("#scanBtn").prop('disabled', false);
         });
       }
     })
