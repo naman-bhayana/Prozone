@@ -1,7 +1,7 @@
 {
-  "name": "impavido",
+  "name": "prozone",
   "version": "1.0.0",
-  "description": "",
+  "description": "prozone gas and smoke api desktop software",
   "main": "public/js/main.js",
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
@@ -10,13 +10,13 @@
     "dist": "build"
   },
   "build": {
-    "appId": "impavido",
+    "appId": "prozone",
     "win": {
       "target": "NSIS",
-      "icon": "./public/img/"
+      "icon": "./public/img/prozone_design_name.jpeg"
     }
   },
-  "author": "impavido",
+  "author": "prozone",
   "license": "ISC",
   "dependencies": {
     "body-parser": "latest",

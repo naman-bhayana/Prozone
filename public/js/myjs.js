@@ -21,7 +21,7 @@ console.log(testDate);
 fs.readFile('gas_test.json',(err,data)=>{
   if (err) {
     let testGasData={
-      "PUC_Test":"CP100/Gas_tController.puc_data",
+      "PUC_Test":"PROZONE/zone1_tController.puc_data",
       CO:"1.23",
       HC:"6666",
       CO2:"12.12",
@@ -33,7 +33,7 @@ fs.readFile('gas_test.json',(err,data)=>{
       Time:testTime,
       Reserve:"8",
       Status:"OK",
-      "PUC_Test_End":"CP100/Gas_tController.puc_data"
+      "PUC_Test_End":"PROZONE/zone1_tController.puc_data"
     };
 
     let jsonContent = JSON.stringify(testGasData);
@@ -56,7 +56,7 @@ fs.readFile('smoke_test.json',(err,data)=>{
   if (err) {
 
    let testSmokeData ={
-    "PUC_Test":"CP100/Smoke_tController.puc_data",
+    "PUC_Test":"PROZONE/zone2_tController.puc_data",
      Flush_Cyl:"#PT;100;5000;60;",
      Status:"OK",
      Test1:"TR03;0.63;800;5000;60",
@@ -66,7 +66,7 @@ fs.readFile('smoke_test.json',(err,data)=>{
      Date:testDate,
      Time:testTime,
      Test_Status:"#TS0",
-     "PUC_Test_End":"CP100/Smoke_tController.puc_data"
+     "PUC_Test_End":"PROZONE/zone2_tController.puc_data"
    }
    let jsonContent = JSON.stringify(testSmokeData);
 
@@ -301,7 +301,7 @@ $('.btn-submit').click((data) => {
               console.log(todayDate+"  time"+time);
 
               let machineData={
-                 PUC_Test:"CP100/Smoke_tController.puc_data",
+                 PUC_Test:"PROZONE/zone2_tController.puc_data",
                  Flush_Cyl:"#PT;"+idealrpmmax+";"+maxrpmavg+";"+avgoiltemp+";",
                  Status:"OK",
                  Test1:"TR01;"+c1k+";"+c1idealrpm+";"+c1maxrpm+";"+c1oil,
@@ -311,7 +311,7 @@ $('.btn-submit').click((data) => {
                  Date:todayDate.toString(),
                  Time:time.toString(),
                  Test_Status:"#TS0",
-                 PUC_Test_End:"CP100/Smoke_tController.puc_data"
+                 PUC_Test_End:"PROZONE/zone2_tController.puc_data"
               };
 
               let jsonContent = JSON.stringify(machineData);
@@ -383,15 +383,15 @@ $('.btn-submit').click((data) => {
               if(data[data.length-2]===0x10 && data[data.length-1]===0x03)
               {
                 console.log("correct End");
-              let  co2_1= ((parseInt(data[2].toString())*256+ parseInt(data[3].toString()))/100).toFixed(3);
+              let  co2_1= ((parseInt(data[2].toString())*256+ parseInt(data[3].toString()))/1000).toFixed(3);
          
-              let co_1 = ((parseInt(data[4].toString())*256+parseInt(data[5].toString()))/100).toFixed(2);
+              let co_1 = ((parseInt(data[4].toString())*256+parseInt(data[5].toString()))/1000).toFixed(2);
 
-              let hc_1 =( (parseInt(data[8].toString())*256 + parseInt(data[9].toString()))/100).toFixed(2);
+              let hc_1 = parseInt(data[8].toString())*256 + parseInt(data[9].toString());
 
               let o2_1 =( (parseInt(data[10].toString())*256 + parseInt(data[11].toString()))/100).toFixed(2);
 
-              let pef1 = ( (parseInt(data[12].toString())*256 +  parseInt(data[13].toString()))/1000).toFixed(3);
+              let pef1 =  (parseInt(data[12].toString())*256 +  parseInt(data[13].toString())).toFixed(3);
             
               let rpm1 = (parseInt(data[14].toString())*256 + parseInt(data[15].toString()));
              
@@ -411,7 +411,7 @@ $('.btn-submit').click((data) => {
               console.log(todayDate+"  time"+time);
 
               let machineData={
-                  "PUC_Test":"CP100/Gas_tController.puc_data",
+                  "PUC_Test":"PROZONE/zone1_tController.puc_data",
                   CO:co_1.toString(),
                   HC:hc_1.toString(),
                   CO2:co2_1.toString(),
@@ -423,7 +423,7 @@ $('.btn-submit').click((data) => {
                   Time:time.toString(),
                   Reserve:"8",
                   Status:"OK",
-                  "PUC_Test_End":"CP100/Gas_tController.puc_data"
+                  "PUC_Test_End":"PROZONE/zone1_tController.puc_data"
               };
 
               let jsonContent = JSON.stringify(machineData);

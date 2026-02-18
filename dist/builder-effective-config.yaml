@@ -1,8 +1,8 @@
 directories:
   output: dist
   buildResources: build
-appId: utkal-electronics
+appId: prozone
 win:
   target: NSIS
-  icon: ./public/img/utkalicon.png
+  icon: ./public/img/prozone_design_name.jpeg
 electronVersion: 4.1.1

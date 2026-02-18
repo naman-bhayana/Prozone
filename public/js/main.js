@@ -19,12 +19,12 @@ function createWindow () {
   server;
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 770,
+    width: 850,
     height: 500,
     resizable: false,
     autoHideMenuBar: true,
     'standard-window': false,
-    icon: '../img/',
+    icon: './public/img/prozone_logo.png',
     webPreferences: {
       nodeIntegration: true
     }
