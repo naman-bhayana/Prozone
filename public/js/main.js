@@ -26,7 +26,9 @@ function createWindow () {
     'standard-window': false,
     icon: './public/img/prozone_logo.png',
     webPreferences: {
-      nodeIntegration: true
+      nodeIntegration: true,
+      contextIsolation: false,
+      enableRemoteModule: true
     }
   })
     
@@ -46,14 +48,14 @@ function createWindow () {
   // Emitted when the window is closed.
   mainWindow.on('close', (e) => {
     if (app.showExitPrompt) {
-        e.preventDefault() // Prevents the window from closing 
+        e.preventDefault()
         dialog.showMessageBox({
             type: 'question',
             buttons: ['Yes', 'No'],
             title: 'Confirm',
             message: 'Are you sure you want to quit?'
-        }, function (response) {
-            if (response === 0) { // Runs the following if 'Yes' is clicked
+        }).then(({ response }) => {
+            if (response === 0) {
                 app.showExitPrompt = false
                 mainWindow.close()
             }

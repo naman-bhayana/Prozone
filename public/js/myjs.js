@@ -1,13 +1,13 @@
 const { app,dialog } = require('electron').remote
 var moment = require('moment');
 window.$ = window.jQuery = require('../js/jquery.min.js');
-let serialport = require('serialport');
-const Readline =  require('@serialport/parser-readline')
-const ByteLength = serialport.parsers.ByteLength;
+const { SerialPort } = require('serialport');
+const { ReadlineParser } = require('@serialport/parser-readline');
+const { ByteLengthParser } = require('@serialport/parser-byte-length');
 const fs = require('fs');
 const fs2 = require('fs');
-let hexparserSmoke =new ByteLength({ length: 1});
-let hexparserGas =new ByteLength({ length: 25});
+let hexparserSmoke = new ByteLengthParser({ length: 1});
+let hexparserGas = new ByteLengthParser({ length: 25});
 
 console.log(parseInt('0E',16));
 
@@ -86,33 +86,31 @@ fs.readFile('smoke_test.json',(err,data)=>{
 
 
 
+let strData = "";
 let port = null;
 
-serialport.list((err, ports) => {
+SerialPort.list().then(ports => {
   console.log("serialport list");
   console.log(ports.length);
   if(ports.length>0){
     for (let item of ports) {
-      $('.com').append(`<option>${item.comName}</option>`)
+      $('.com').append(`<option>${item.path}</option>`)
     }
     console.log(ports);    
   }
-  if(err){
-    app.showExitPrompt = true
-    if (app.showExitPrompt) {
-      
-      dialog.showMessageBox({
-          type: 'question',
-          buttons: ['OK'],
-          title: 'Alert',
-          message: 'No Comport Found'
-      }, function (response) {
-          if (response === 0) { // Runs the following if 'Yes' is clicked
-              app.showExitPrompt = false
-              
-          }
-      })
-    }
+}).catch(err => {
+  app.showExitPrompt = true
+  if (app.showExitPrompt) {
+    dialog.showMessageBox({
+        type: 'question',
+        buttons: ['OK'],
+        title: 'Alert',
+        message: 'No Comport Found'
+    }).then(({ response }) => {
+        if (response === 0) {
+            app.showExitPrompt = false
+        }
+    })
   }
 });
 
@@ -136,8 +134,8 @@ $('.btn-submit').click((data) => {
           buttons: ['OK'],
           title: 'Alert',
           message: 'Please Select Test type'
-      }, function (response) {
-          if (response === 0) { // Runs the following if 'Yes' is clicked
+      }).then(({ response }) => {
+          if (response === 0) {
             app.showExitPrompt = false
           }
       })
@@ -153,10 +151,9 @@ $('.btn-submit').click((data) => {
             buttons: ['OK'],
             title: 'Alert',
             message: 'There is no com port selected'
-        }, function (response) {
-            if (response === 0) { // Runs the following if 'Yes' is clicked
+        }).then(({ response }) => {
+            if (response === 0) {
                 app.showExitPrompt = false
-                
             }
         })
     }
@@ -164,7 +161,8 @@ $('.btn-submit').click((data) => {
   else if(buttonName==='Connect')
   {   
 
-    port = new serialport(COM, {
+    port = new SerialPort({
+      path: COM,
       baudRate: parseInt(BaudRate)
     });
 
@@ -185,10 +183,9 @@ $('.btn-submit').click((data) => {
             buttons: ['OK'],
             title: 'Alert',
             message: 'Could not open the port'
-        }, function (response) {
-            if (response === 0) { // Runs the following if 'Yes' is clicked
+        }).then(({ response }) => {
+            if (response === 0) {
                 app.showExitPrompt = false
-                
             }
         })
       }
@@ -467,8 +464,8 @@ $('.btn-submit').click((data) => {
           buttons: ['OK','NO'],
           title: 'Alert',
           message: 'Port is going to close. You may loose data'
-      }, function (response) {
-          if (response === 0) { // Runs the following if 'Yes' is clicked
+      }).then(({ response }) => {
+          if (response === 0) {
               app.showExitPrompt = false
               port.close(err=> {
                 console.log('port closed', err);
@@ -477,9 +474,9 @@ $('.btn-submit').click((data) => {
                 $("#disabledSelect").prop('disabled', false);
                 $("#BaudRate").prop('disabled', false);
                 $("#scanBtn").prop('disabled', false);
-        });
-      }
-    })
+              });
+          }
+      })
   }   
   }
 });
@@ -488,33 +485,30 @@ $('.btn-submit').click((data) => {
 
 //scan button
 $('.btn-scan').click(()=>{
-  serialport.list((err, ports) => {
-    $(disabledSelect).empty();
+  SerialPort.list().then(ports => {
+    $('#disabledSelect').empty();
 
-    if(err){
-      app.showExitPrompt = true
-        if (app.showExitPrompt) {
-        
-        dialog.showMessageBox({
-            type: 'question',
-            buttons: ['OK'],
-            title: 'Alert',
-            message: 'No Comport Found'
-        }, function (response) {
-            if (response === 0) { // Runs the following if 'Yes' is clicked
-                app.showExitPrompt = false
-                
-            }
-        })
+    if(ports.length>0)
+    {
+      for (let item of ports) 
+      {
+        $('.com').append(`<option>${item.path}</option>`)
       }
+      console.log(ports);
     }
-    else if(ports.length>0)
-    {
-    for (let item of ports) 
-    {
-      $('.com').append(`<option>${item.comName}</option>`)
-    }
-    console.log(ports);
+  }).catch(err => {
+    app.showExitPrompt = true
+    if (app.showExitPrompt) {
+      dialog.showMessageBox({
+          type: 'question',
+          buttons: ['OK'],
+          title: 'Alert',
+          message: 'No Comport Found'
+      }).then(({ response }) => {
+          if (response === 0) {
+              app.showExitPrompt = false
+          }
+      })
     }
   });
 })
