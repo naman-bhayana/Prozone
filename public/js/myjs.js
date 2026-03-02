@@ -49,6 +49,9 @@ fs.readFile('gas_test.json',(err,data)=>{
   }
   else{
     console.log("gas test file found");
+    fs.readFile('gas_test.json','utf8',(err,data)=>{
+      if (!err && data) fs.writeFile("gas.json", data, 'utf8', (e)=>{ if (!e) console.log("gas.json initialized from gas_test.json"); });
+    });
   }
 }); //end readFile gas_test.json 
 
@@ -81,6 +84,9 @@ fs.readFile('smoke_test.json',(err,data)=>{
   }
   else{
     console.log("smoke test file found");
+    fs.readFile('smoke_test.json','utf8',(err,data)=>{
+      if (!err && data) fs.writeFile("smoke.json", data, 'utf8', (e)=>{ if (!e) console.log("smoke.json initialized from smoke_test.json"); });
+    });
   }
 });//end readFile smoke_test.json 
 
@@ -88,6 +94,29 @@ fs.readFile('smoke_test.json',(err,data)=>{
 
 let strData = "";
 let port = null;
+
+function formatGasDisplay(obj) {
+  var lines = [
+    "CO: " + (obj.CO != null ? obj.CO : ""),
+    "HC: " + (obj.HC != null ? obj.HC : ""),
+    "CO2: " + (obj.CO2 != null ? obj.CO2 : ""),
+    "O2: " + (obj.O2 != null ? obj.O2 : ""),
+    "RPM: " + (obj.RPM != null ? obj.RPM : ""),
+    "Lambda: " + (obj.Lambda != null ? obj.Lambda : "")
+  ];
+  return lines.join("\n");
+}
+
+function formatSmokeDisplay(obj) {
+  var lines = [
+    "Flush_Cyl: " + (obj.Flush_Cyl != null ? obj.Flush_Cyl : ""),
+    "Test1: " + (obj.Test1 != null ? obj.Test1 : ""),
+    "Test2: " + (obj.Test2 != null ? obj.Test2 : ""),
+    "Test3: " + (obj.Test3 != null ? obj.Test3 : ""),
+    "Test_AVG: " + (obj.Test_AVG != null ? obj.Test_AVG : "")
+  ];
+  return lines.join("\n");
+}
 
 SerialPort.list().then(ports => {
   console.log("serialport list");
@@ -207,13 +236,14 @@ $('.btn-submit').click((data) => {
         });//end port on data
 
         hexparserSmoke.on('data', (data) => { 
-                              
+          // Each byte becomes 2 hex chars (e.g. 0x2A -> "2a"), so 53 bytes -> 106 hex chars
           if(data.length<51)
           {
             console.log("data length = "+data.length);
             strData = strData.concat(data.toString('hex'));
+            if (strData.length > 106) { strData = strData.slice(-106); }
             let star = (strData[0].concat(strData[1])).toUpperCase();
-            if(star!="2A")
+            if(star!="2A" && star!="2D")
             {
               strData="";
               return;
@@ -226,25 +256,27 @@ $('.btn-submit').click((data) => {
               let Z = (strData[2].concat(strData[3])).toUpperCase();
               let Dollar = (strData[18].concat(strData[19])).toUpperCase();
 
-              if(star =="2A" && Z=="5A" && Dollar=="24")
+              if((star =="2A" && Z=="5A" && Dollar=="24") || (star=="2D" && Z=="68" && Dollar=="24"))
               {
                 console.log("Flush cycle is correct");
               }
               else
               {
                 console.log("Incorrect Flush cycle   ="+strData);
+                strData="";
                 return;
               }
 
             }
-            if(strData.length==102 || strData.length==100)
+            if(strData.length==106 || strData.length==102 || strData.length==100)
             {
               $("#data2").removeClass('data1');
               $("#data2").addClass('data');
-              let star = (strData[20].concat(strData[21])).toUpperCase();
+              let measStart = (strData[20].concat(strData[21])).toUpperCase();
               let E = (strData[22].concat(strData[23])).toUpperCase();
-              let Dollar = (strData[100].concat(strData[101])).toUpperCase();
-              if(star=="2A" && E=="45" && Dollar=="24")
+              var endIdx = strData.length - 2;
+              let Dollar = (strData[endIdx].concat(strData[endIdx+1])).toUpperCase();
+              if((measStart=="2A" && E=="45" && Dollar=="24") || (measStart=="62" && E=="63" && Dollar=="24"))
               {
                 console.log("Measurment cycle is correct");
               }
@@ -261,6 +293,21 @@ $('.btn-submit').click((data) => {
                 return;
               }
               console.log(strData);
+              
+              function strToHex2(a1)
+              {
+                if (a1+1 >= strData.length) return 0;
+                return parseInt("0x".concat(strData[a1].concat(strData[a1+1])));
+              }
+
+              function strToHex(a1)
+              {
+                  if (a1+3 >= strData.length) return 0;
+                  let HB = parseInt("0x".concat(strData[a1].concat(strData[a1+1])));
+                  let LB = parseInt("0x".concat(strData[a1+2].concat(strData[a1+3])));
+                  let res = HB*256+LB;
+                  return res;
+              }
               
               let idealrpmmax = strToHex(4).toString();
               let maxrpmavg = strToHex(8).toString();
@@ -318,7 +365,7 @@ $('.btn-submit').click((data) => {
                 else
                 {
                   console.log("File has been saved");
-                  $('.receive-windows').text(jsonContent.replace(/,/g,"\n"));    
+                  $('.receive-windows').text(formatSmokeDisplay(machineData));
                 }
               });
               
@@ -330,22 +377,9 @@ $('.btn-submit').click((data) => {
                  $("#data1").addClass('data1');
                  $("#data2").addClass('data1');
                 }, 1000);
+            }//end if strData.length = 102/106
 
-              function strToHex2(a1)
-              {
-                return parseInt("0x".concat(strData[a1].concat(strData[a1+1])));
-              }
-
-              function strToHex(a1)
-              {
-                  let HB = parseInt("0x".concat(strData[a1].concat(strData[a1+1])));
-                  let LB = parseInt("0x".concat(strData[a1+2].concat(strData[a1+3])));
-                  let res = HB*256+LB;
-                  return res;
-              }
-            }//end if strData.length = 102
-
-            if(strData.length>102)
+            if(strData.length>106)
             {
               strData="";
                $('.receive-windows').text("Inappropriate Data Received");
@@ -430,8 +464,7 @@ $('.btn-submit').click((data) => {
 
                   }else{
                       console.log("File has been save");
-                      $('.receive-windows').text(jsonContent.replace(/,/g,"\n"));
-                      
+                      $('.receive-windows').text(formatGasDisplay(machineData));
                   }
               });
             }
@@ -474,6 +507,10 @@ $('.btn-submit').click((data) => {
                 $("#disabledSelect").prop('disabled', false);
                 $("#BaudRate").prop('disabled', false);
                 $("#scanBtn").prop('disabled', false);
+                $('.receive-windows').text('');
+                $('#selectTestType').prop('selectedIndex', 0);
+                $('#disabledSelect').empty();
+                $('#BaudRate').val('9600');
               });
           }
       })

@@ -9,7 +9,16 @@ app.use((req, res, next) => {
   next();
 });
 
-//gas value
+// Strip PUC_Test and PUC_Test_End so API response starts from CO and ends at OK
+function stripPucWrapper(obj) {
+  var o = Object.assign({}, obj);
+  delete o.PUC_Test;
+  delete o.PUC_Test_End;
+  return o;
+}
+
+// API mapping: Zone1 = gas live, Zone1_t = gas test, Zone2 = smoke live, Zone2_t = smoke test
+//gas value (Multi Gas Analyzer - live)
 app.get('/api/PROZONE/Zone1/',(req,res)=>{
    
  
@@ -27,7 +36,7 @@ app.get('/api/PROZONE/Zone1/',(req,res)=>{
             // parse json
             var jsonParsed = JSON.parse(jsonData);
      
-           res.send(jsonParsed);
+           res.send(stripPucWrapper(jsonParsed));
     });
 
 });
@@ -48,7 +57,7 @@ app.get('/api/PROZONE/Zone1_t/',(req,res)=>{
             // parse json
             var jsonParsed = JSON.parse(jsonData);
      
-           res.send(jsonParsed);
+           res.send(stripPucWrapper(jsonParsed));
     });
 });
 
@@ -67,7 +76,7 @@ app.get('/api/PROZONE/Zone2/',(req,res)=>{
          // parse json
          var jsonParsed = JSON.parse(jsonData);
   
-        res.send(jsonParsed);
+        res.send(stripPucWrapper(jsonParsed));
     });
 });
 
@@ -87,7 +96,7 @@ app.get('/api/PROZONE/Zone2_t/',(req,res)=>{
          // parse json
          var jsonParsed = JSON.parse(jsonData);
   
-        res.send(jsonParsed);
+        res.send(stripPucWrapper(jsonParsed));
     });
 });
 
