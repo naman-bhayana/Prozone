@@ -95,6 +95,60 @@ fs.readFile('smoke_test.json',(err,data)=>{
 let strData = "";
 let port = null;
 
+function decodeSmokeFrame(frame) {
+  // Smoke Meter Zone-02 frame (Prozone_HEX_data.pdf) is 53 bytes:
+  // Start: 2D 68, End: 40 24
+  if (!frame || frame.length !== 53) return null;
+  if (frame[0] !== 0x2D || frame[1] !== 0x68) return null;
+  if (frame[51] !== 0x40 || frame[52] !== 0x24) return null;
+
+  function u16be(i) {
+    if (i < 0 || i + 1 >= frame.length) return 0;
+    return frame[i] * 256 + frame[i + 1];
+  }
+
+  // Flush cycle averages (bytes 3..8 in the PDF)
+  const flushMinRpmAvg = u16be(2).toString();
+  const flushMaxRpmAvg = u16be(4).toString();
+  const oilTempAvg = u16be(6).toString();
+
+  // Test cycles (all are 16-bit BE values; scaling taken from existing code conventions)
+  const c1k = (u16be(13) / 100).toString();
+  const c1minRpm = u16be(17).toString();
+  const c1maxRpm = u16be(19).toString();
+  const c1oil = u16be(21).toString();
+
+  const c2k = (u16be(23) / 100).toString();
+  const c2minRpm = u16be(27).toString();
+  const c2maxRpm = u16be(29).toString();
+  const c2oil = u16be(31).toString();
+
+  const c3k = (u16be(33) / 100).toString();
+  const c3minRpm = u16be(37).toString();
+  const c3maxRpm = u16be(39).toString();
+  const c3oil = u16be(41).toString();
+
+  const avgk = (u16be(43) / 100).toString();
+
+  const date = moment();
+  const todayDate = date.format("DD-MM-YYYY");
+  const time = date.format("HH:mm");
+
+  return {
+    PUC_Test: "PROZONE/zone2_tController.puc_data",
+    Flush_Cyl: "#PT;" + flushMinRpmAvg + ";" + flushMaxRpmAvg + ";" + oilTempAvg + ";",
+    Status: "OK",
+    Test1: "TR01;" + c1k + ";" + c1minRpm + ";" + c1maxRpm + ";" + c1oil,
+    Test2: "TR02;" + c2k + ";" + c2minRpm + ";" + c2maxRpm + ";" + c2oil,
+    Test3: "TR03;" + c3k + ";" + c3minRpm + ";" + c3maxRpm + ";" + c3oil,
+    Test_AVG: "#TA;" + avgk,
+    Date: todayDate.toString(),
+    Time: time.toString(),
+    Test_Status: "#TS0",
+    PUC_Test_End: "PROZONE/zone2_tController.puc_data"
+  };
+}
+
 function formatGasDisplay(obj) {
   var lines = [
     "CO: " + (obj.CO != null ? obj.CO : ""),
@@ -108,14 +162,10 @@ function formatGasDisplay(obj) {
 }
 
 function formatSmokeDisplay(obj) {
-  var lines = [
-    "Flush_Cyl: " + (obj.Flush_Cyl != null ? obj.Flush_Cyl : ""),
-    "Test1: " + (obj.Test1 != null ? obj.Test1 : ""),
-    "Test2: " + (obj.Test2 != null ? obj.Test2 : ""),
-    "Test3: " + (obj.Test3 != null ? obj.Test3 : ""),
-    "Test_AVG: " + (obj.Test_AVG != null ? obj.Test_AVG : "")
-  ];
-  return lines.join("\n");
+  var display = Object.assign({}, obj);
+  delete display.PUC_Test;
+  delete display.PUC_Test_End;
+  return JSON.stringify(display);
 }
 
 SerialPort.list().then(ports => {
@@ -229,169 +279,44 @@ $('.btn-submit').click((data) => {
       port.pipe(hexparserSmoke);
       try
       {
-        var count=0;
-            
-        port.on('data',data =>{
-          console.log(data.length);
-        });//end port on data
+        let smokeBuf = Buffer.alloc(0);
+        const startBytes = Buffer.from([0x2D, 0x68]);
 
-        hexparserSmoke.on('data', (data) => { 
-          // Each byte becomes 2 hex chars (e.g. 0x2A -> "2a"), so 53 bytes -> 106 hex chars
-          if(data.length<51)
-          {
-            console.log("data length = "+data.length);
-            strData = strData.concat(data.toString('hex'));
-            if (strData.length > 106) { strData = strData.slice(-106); }
-            let star = (strData[0].concat(strData[1])).toUpperCase();
-            if(star!="2A" && star!="2D")
-            {
-              strData="";
+        hexparserSmoke.on('data', (b) => {
+          smokeBuf = Buffer.concat([smokeBuf, b]);
+
+          // prevent unbounded growth if input is noisy
+          if (smokeBuf.length > 4096) smokeBuf = smokeBuf.slice(-256);
+
+          while (smokeBuf.length >= 53) {
+            const start = smokeBuf.indexOf(startBytes);
+            if (start < 0) {
+              smokeBuf = smokeBuf.slice(-1);
               return;
             }
-            if(strData.length==20)
-            {
-              $("#data1").removeClass('data1');
-              $("#data1").addClass('data');
-              
-              let Z = (strData[2].concat(strData[3])).toUpperCase();
-              let Dollar = (strData[18].concat(strData[19])).toUpperCase();
-
-              if((star =="2A" && Z=="5A" && Dollar=="24") || (star=="2D" && Z=="68" && Dollar=="24"))
-              {
-                console.log("Flush cycle is correct");
-              }
-              else
-              {
-                console.log("Incorrect Flush cycle   ="+strData);
-                strData="";
-                return;
-              }
-
-            }
-            if(strData.length==106 || strData.length==102 || strData.length==100)
-            {
-              $("#data2").removeClass('data1');
-              $("#data2").addClass('data');
-              let measStart = (strData[20].concat(strData[21])).toUpperCase();
-              let E = (strData[22].concat(strData[23])).toUpperCase();
-              var endIdx = strData.length - 2;
-              let Dollar = (strData[endIdx].concat(strData[endIdx+1])).toUpperCase();
-              if((measStart=="2A" && E=="45" && Dollar=="24") || (measStart=="62" && E=="63" && Dollar=="24"))
-              {
-                console.log("Measurment cycle is correct");
-              }
-              else
-              {
-                console.log("Wrong Measurment cycle");
-                console.log(strData);
-                $('.receive-windows').text("Inappropriate Data Received");
-                $('#data1').removeClass("data");
-                 $("#data2").removeClass('data');
-                $("#data1").addClass('data1');
-                $("#data2").addClass('data1');
-                strData = ""; 
-                return;
-              }
-              console.log(strData);
-              
-              function strToHex2(a1)
-              {
-                if (a1+1 >= strData.length) return 0;
-                return parseInt("0x".concat(strData[a1].concat(strData[a1+1])));
-              }
-
-              function strToHex(a1)
-              {
-                  if (a1+3 >= strData.length) return 0;
-                  let HB = parseInt("0x".concat(strData[a1].concat(strData[a1+1])));
-                  let LB = parseInt("0x".concat(strData[a1+2].concat(strData[a1+3])));
-                  let res = HB*256+LB;
-                  return res;
-              }
-              
-              let idealrpmmax = strToHex(4).toString();
-              let maxrpmavg = strToHex(8).toString();
-              let avgoiltemp = strToHex(12).toString();
-
-              let checksum1 = strToHex2(16).toString();
-
-              let c1k = (strToHex(24)/100).toString();
-              let c1hsu = (strToHex(28)/10).toString();
-              let c1idealrpm = strToHex(32).toString();
-              let c1maxrpm = strToHex(36).toString();
-              let c1oil = strToHex(40).toString();
-
-              let c2k = (strToHex(44)/100).toString();
-              let c2hsu = (strToHex(48)/10).toString();
-              let c2idealrpm = strToHex(52).toString();
-              let c2maxrpm = strToHex(56).toString();
-              let c2oil = strToHex(60).toString();
-
-              let c3k = (strToHex(64)/100).toString();
-              let c3hsu = (strToHex(68)/10).toString();
-              let c3idealrpm = strToHex(72).toString();
-              let c3maxrpm = strToHex(76).toString();
-              let c3oil = strToHex(80).toString();
-
-              let avgk = strToHex(84).toString();
-              let avghsu = strToHex(88).toString();
-
-              let teststatus = strToHex2(92).toString();
-              let checksum2 = strToHex2(98).toString();
-
-              const date = moment();
-              let todayDate = date.format("DD-MM-YYYY");
-              let time = date.format("HH:mm");
-              console.log(todayDate+"  time"+time);
-
-              let machineData={
-                 PUC_Test:"PROZONE/zone2_tController.puc_data",
-                 Flush_Cyl:"#PT;"+idealrpmmax+";"+maxrpmavg+";"+avgoiltemp+";",
-                 Status:"OK",
-                 Test1:"TR01;"+c1k+";"+c1idealrpm+";"+c1maxrpm+";"+c1oil,
-                 Test2:"TR02;"+c2k+";"+c2idealrpm+";"+c2maxrpm+";"+c2oil,
-                 Test3:"TR03;"+c3k+";"+c3idealrpm+";"+c3maxrpm+";"+c3oil,
-                 Test_AVG:"#TA;"+avgk,
-                 Date:todayDate.toString(),
-                 Time:time.toString(),
-                 Test_Status:"#TS0",
-                 PUC_Test_End:"PROZONE/zone2_tController.puc_data"
-              };
-
-              let jsonContent = JSON.stringify(machineData);
-
-              fs2.writeFile("smoke.json",jsonContent,'utf8',(err)=>{
-                if(err){}
-                else
-                {
-                  console.log("File has been saved");
-                  $('.receive-windows').text(formatSmokeDisplay(machineData));
-                }
-              });
-              
-              strData="";
-
-              setTimeout(function() {
-                 $('#data1').removeClass("data");
-                 $("#data2").removeClass('data');
-                 $("#data1").addClass('data1');
-                 $("#data2").addClass('data1');
-                }, 1000);
-            }//end if strData.length = 102/106
-
-            if(strData.length>106)
-            {
-              strData="";
-               $('.receive-windows').text("Inappropriate Data Received");
-               $("#data1").addClass('data1');
-               $("#data2").addClass('data1');
+            if (smokeBuf.length - start < 53) {
+              if (start > 0) smokeBuf = smokeBuf.slice(start);
+              return;
             }
 
-          }//end if data.lenth<51
-          
-          data=null;
-          
-        });//end hexparserSmoke
+            const frame = smokeBuf.slice(start, start + 53);
+            smokeBuf = smokeBuf.slice(start + 53);
+
+            const machineData = decodeSmokeFrame(frame);
+            if (!machineData) {
+              // resync by sliding 1 byte forward
+              smokeBuf = Buffer.concat([frame.slice(1), smokeBuf]);
+              continue;
+            }
+
+            fs2.writeFile("smoke.json", JSON.stringify(machineData), 'utf8', (err) => {
+              if (!err) {
+                console.log("File has been saved");
+                $('.receive-windows').text(formatSmokeDisplay(machineData));
+              }
+            });
+          }
+        });
       }
       catch(err)
       {
